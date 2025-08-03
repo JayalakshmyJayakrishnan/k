@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NCPify - Your Lore Begins Here</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap" rel="stylesheet">
+    
+    <style>
+        /*
+          FIXED: Custom fonts are now self-hosted.
+          You must create a 'fonts' folder next to your index.html file
+          and place the .ttf font files inside it.
+          /
+          |-- index.html
+          |-- /fonts/
+              |-- BitcountPropSingle-Regular.ttf
+              |-- cageworld.ttf
+        */
+        @font-face {
+            font-family: 'Bitcount Prop Single';
+            src: url('./fonts/BitcountPropSingle-Regular.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'CageWorld';
+            src: url('./fonts/cageworld.ttf') format('truetype');
+        }
+
+        body {
+            font-family: 'Gloria Hallelujah', cursive;
+        }
+        .font-bitcount { font-family: 'Bitcount Prop Single', sans-serif; }
+        .font-cageworld { font-family: 'CageWorld', sans-serif; }
+        .font-gloria { font-family: 'Gloria Hallelujah', cursive; }
+
+        /* Custom scrollbar for a more stylized look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2d3748; /* A neutral dark color */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF4C4C; /* Accent color */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #DD4A48; /* Darker accent on hover */
+        }
+        
+        /* Tailwind theme configuration */
+        .dark {
+            --bg-color: #111111;
+            --text-color: #FAFAFA;
+            --accent-color: #FF4C4C;
+            --secondary-color: #8DECB4;
+        }
+        :root:not(.dark) {
+            --bg-color: #F4F4F4;
+            --text-color: #343434;
+            --accent-color: #DD4A48;
+            --secondary-color: #50586C;
+        }
+    </style>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.4/dist/framer-motion.umd.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/react-pageflip@2.0.3/build/react-pageflip.browser.js"></script>
+
+</head>
+<body class="bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-500">
+
+    <div id="root"></div>
+    
+    <script type="text/babel" data-type="module">
+        const { useState, useEffect, useRef, createContext, useContext } = React;
+        
+        // FIXED: Use the correct global variable 'FramerMotion'
+        const { motion, AnimatePresence } = FramerMotion;
+
+        // --- Mock Data ---
+        // This data simulates a basic backend database for the prototype.
+        const MOCK_USERS = {
+            "test@test.com": {
+                username: "MemeLord",
+                password: "password123",
+                avatar: {
+                    displayName: "MemeLord",
+                    color: "purple",
+                    role: "Meme Mage",
+                    image: "https://placehold.co/100x100/8B5CF6/FFFFFF?text=ML"
+                }
+            }
+        };
+
+        const MOCK_GROUPS = {
+            "L0R3MAST3R": {
+                name: "The Lore Masters",
+                members: ["MemeLord", "Newbie"],
+                streak: 45,
+                lore: [
+                    { id: 1, uploader: "MemeLord", image: "https://placehold.co/600x800/111111/FAFAFA?text=Lore+Screenshot+1", rating: 4.5, raters: 10 },
+                    { id: 2, uploader: "Newbie", image: "https://placehold.co/600x800/343434/FAFAFA?text=Lore+Screenshot+2", rating: 3.8, raters: 5 },
+                    { id: 3, uploader: "MemeLord", image: "https://placehold.co/600x800/50586C/FAFAFA?text=Lore+Screenshot+3", rating: 4.9, raters: 15 },
+                ]
+            }
+        };
+        
+        // --- App Context for Global State ---
+        // Context provides a way to pass data through the component tree without having to pass props down manually at every level.
+        const AppContext = createContext();
+
+        const AppProvider = ({ children }) => {
+            const [page, setPage] = useState('landing');
+            const [theme, setTheme] = useState('dark');
+            const [isMuted, setIsMuted] = useState(true);
+            const [user, setUser] = useState(null);
+            const [groups, setGroups] = useState(MOCK_GROUPS);
+            const [currentGroup, setCurrentGroup] = useState(null);
+
+            const audioRef = useRef(null);
+
+            // Effect for initializing theme, audio, and checking for daily ritual on load.
+            useEffect(() => {
+                // Load theme from localStorage or default to 'dark'
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                setTheme(savedTheme);
+                document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+                
+                // Load mute state from localStorage
+                const savedMute = localStorage.getItem('isMuted') === 'true';
+                setIsMuted(savedMute);
+
+                // Initialize background music with Howler.js
+                if (!audioRef.current) {
+                    audioRef.current = new Howl({
+                        src: ['https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'],
+                        loop: true,
+                        volume: 0.3,
+                        mute: savedMute,
+                    });
+                }
+                
+                // If a user is logged in, check if they need to perform the daily ritual.
+                if (user) {
+                    const lastRitualDate = localStorage.getItem('lastRitualDate');
+                    const today = new Date().toISOString().split('T')[0];
+                    if (lastRitualDate !== today) {
+                        setPage('ritual');
+                    }
+                }
+
+                // Cleanup function to unload audio when the component unmounts.
+                return () => audioRef.current?.unload();
+            }, [user]);
+
+            const toggleTheme = () => {
+                const newTheme = theme === 'light' ? 'dark' : 'light';
+                setTheme(newTheme);
+                localStorage.setItem('theme', newTheme);
+                document.documentElement.classList.toggle('dark', newTheme === 'dark');
+            };
+
+            const toggleMute = () => {
+                const newMutedState = !isMuted;
+                setIsMuted(newMutedState);
+                localStorage.setItem('isMuted', String(newMutedState));
+                audioRef.current?.mute(newMutedState);
+                // If unmuting, and audio isn't playing, start it.
+                if (!newMutedState && !audioRef.current.playing()) {
+                    audioRef.current.play();
+                }
+            };
+            
+            const login = (userData) => {
+                setUser(userData);
+                setPage('instructions'); // Go to instructions after login/signup
+            };
+            
+            const createGroup = (groupName) => {
+                const newCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+                const newGroup = {
+                    name: groupName,
+                    members: [user.avatar.displayName],
+                    streak: 1,
+                    lore: []
+                };
+                setGroups(prev => ({ ...prev, [newCode]: newGroup }));
+                setCurrentGroup(newCode);
+                setPage('group-dashboard');
+                return newCode;
+            };
+
+            const joinGroup = (code) => {
+                if (groups[code]) {
+                    const group = groups[code];
+                    // Add user to group if not already a member
+                    if (!group.members.includes(user.avatar.displayName)) {
+                        group.members.push(user.avatar.displayName);
+                        setGroups(prev => ({ ...prev, [code]: group }));
+                    }
+                    setCurrentGroup(code);
+                    setPage('group-dashboard');
+                    return true;
+                }
+                return false;
+            };
+
+            // The value object holds all state and functions to be provided to consuming components.
+            const value = {
+                page, setPage,
+                theme, toggleTheme,
+                isMuted, toggleMute,
+                user, setUser, login,
+                groups, createGroup, joinGroup, currentGroup, setCurrentGroup,
+                setGroups
+            };
+
+            return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+        };
+        
+        // --- UI Components ---
+
+        // Animated canvas background that shifts colors.
+        const AnimatedBackground = () => {
+            const canvasRef = useRef(null);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let frame;
+                const tileSize = 40;
+                const colors = ['#4a044e', '#3b0764', '#2e0b5c', '#1e1b4b', '#fde047', '#fbbf24'];
+                let tiles = [];
+
+                function resizeCanvas() {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                    createTiles();
+                }
+
+                function createTiles() {
+                    tiles = [];
+                    for (let y = 0; y < canvas.height; y += tileSize) {
+                        for (let x = 0; x < canvas.width; x += tileSize) {
+                            tiles.push({ x, y, color: colors[Math.floor(Math.random() * colors.length)] });
+                        }
+                    }
+                }
+
+                function draw() {
+                    tiles.forEach(tile => {
+                        // Randomly change a tile's color to create a shimmering effect
+                        if (Math.random() > 0.995) {
+                           tile.color = colors[Math.floor(Math.random() * colors.length)];
+                        }
+                        ctx.fillStyle = tile.color;
+                        ctx.fillRect(tile.x, tile.y, tileSize, tileSize);
+                    });
+                    frame = requestAnimationFrame(draw);
+                }
+
+                window.addEventListener('resize', resizeCanvas);
+                resizeCanvas();
+                draw();
+
+                return () => {
+                    window.removeEventListener('resize', resizeCanvas);
+                    cancelAnimationFrame(frame);
+                };
+            }, []);
+
+            return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10"></canvas>;
+        };
+
+        // Global header with theme and audio toggles.
+        const Header = () => {
+            const { theme, toggleTheme, isMuted, toggleMute } = useContext(AppContext);
+            return (
+                <header className="fixed top-0 left-0 right-0 p-4 flex justify-between items-center z-50">
+                    <button onClick={toggleTheme} className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-2xl hover:scale-110 transition-transform">
+                        {theme === 'light' ? '🌙' : '☀️'}
+                    </button>
+                    <button onClick={toggleMute} className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-2xl hover:scale-110 transition-transform">
+                        {isMuted ? '🔇' : '🔊'}
+                    </button>
+                </header>
+            );
+        };
+        
+        // --- Page Components ---
+
+        const LandingPage = () => {
+            const { setPage } = useContext(AppContext);
+            return (
+                <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 1.5, type: "spring", stiffness: 100 }}
+                    >
+                        <h1 className="text-7xl md:text-9xl font-bitcount text-[var(--accent-color)] drop-shadow-lg">NCPify</h1>
+                        <p className="mt-4 text-xl md:text-2xl font-gloria">Your Lore Begins Here...</p>
+                    </motion.div>
+                    <motion.div 
+                        className="mt-12 space-y-4 md:space-y-0 md:space-x-6 flex flex-col md:flex-row"
+                        initial={{ y: 50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 1, duration: 0.8 }}
+                    >
+                        <button onClick={() => setPage('signup')} className="px-8 py-3 bg-[var(--accent-color)] text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 font-gloria">
+                            Create Account
+                        </button>
+                        <button onClick={() => setPage('login')} className="px-8 py-3 bg-[var(--secondary-color)] text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 font-gloria">
+                            Login
+                        </button>
+                    </motion.div>
+                </div>
+            );
+        };
+        
+        const AuthPage = ({ isLogin }) => {
+            const { setPage, login } = useContext(AppContext);
+            const [email, setEmail] = useState('');
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setError('');
+                if (isLogin) {
+                    const user = MOCK_USERS[email];
+                    if (user && user.password === password) {
+                        login(user);
+                    } else {
+                        setError("Invalid credentials. Hint: test@test.com, password123");
+                    }
+                } else {
+                    if (!email || !username || !password) {
+                        setError("All fields are required.");
+                        return;
+                    }
+                    const newUser = { username, password, avatar: { displayName: username, color: 'blue', role: 'Text Warrior', image: `https://placehold.co/100x100/3B82F6/FFFFFF?text=${username.substring(0,2)}` } };
+                    MOCK_USERS[email] = newUser; // Add new user to mock data
+                    login(newUser);
+                }
+            };
+
+            return (
+                <div className="flex items-center justify-center min-h-screen px-4">
+                    <motion.div 
+                        className="w-full max-w-md p-8 space-y-6 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl"
+                        initial={{ opacity: 0, y: -50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <h2 className="text-4xl font-bold text-center font-bitcount text-[var(--accent-color)]">{isLogin ? 'Login' : 'Create Account'}</h2>
+                        <form onSubmit={handleSubmit} className="space-y-6 font-gloria">
+                            {!isLogin && (
+                                <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className="w-full px-4 py-3 bg-transparent border-2 border-[var(--secondary-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]" />
+                            )}
+                            <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-3 bg-transparent border-2 border-[var(--secondary-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]" />
+                            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 bg-transparent border-2 border-[var(--secondary-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]" />
+                            {error && <p className="text-red-400 text-center">{error}</p>}
+                            <button type="submit" className="w-full px-8 py-3 bg-[var(--accent-color)] text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300">
+                                {isLogin ? 'Enter the Realm' : 'Forge My Legend'}
+                            </button>
+                        </form>
+                         <p className="text-center font-gloria">
+                            {isLogin ? "Don't have an account? " : "Already a legend? "}
+                            <button onClick={() => setPage(isLogin ? 'signup' : 'login')} className="font-bold text-[var(--secondary-color)] hover:underline">
+                                {isLogin ? 'Sign Up' : 'Login'}
+                            </button>
+                        </p>
+                    </motion.div>
+                </div>
+            );
+        };
+        
+        const InstructionsPage = () => {
+            const { setPage } = useContext(AppContext);
+            const text = "INSTRUCTIONS";
+            return (
+                <div className="flex items-center justify-center min-h-screen px-4">
+                    <motion.div 
+                        className="w-full max-w-2xl p-8 space-y-6 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl text-center"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <h2 className="text-5xl font-cageworld text-[var(--accent-color)] mb-6">
+                            {text.split("").map((char, i) => (
+                                <motion.span key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.1 }}>
+                                    {char}
+                                </motion.span>
+                            ))}
+                        </h2>
+                        <div className="text-lg font-gloria space-y-4 text-left p-4 border-2 border-[var(--secondary-color)] rounded-lg max-h-64 overflow-y-auto">
+                            <p>Welcome to NCPify.</p>
+                            <p>This application allows you to form groups, upload your chat lore, and compile everything into a legendary flipbook. But there is a catch — every day you return, you must perform a sacred ritual to continue your streak.</p>
+                            <p>Lore is sacred. Don’t disappoint the spirits.</p>
+                        </div>
+                        <button onClick={() => setPage('customize')} className="mt-8 px-8 py-3 bg-[var(--accent-color)] text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 font-gloria">
+                            Begin My Journey
+                        </button>
+                    </motion.div>
+                </div>
+            );
+        };
+
+        const CustomizeAvatarPage = () => {
+            const { setPage, user, setUser } = useContext(AppContext);
+            const [displayName, setDisplayName] = useState(user.avatar.displayName);
+            const [role, setRole] = useState(user.avatar.role);
+            const [image, setImage] = useState(user.avatar.image);
+            const fileInputRef = useRef(null);
+
+            const handleSave = () => {
+                setUser({ ...user, avatar: { ...user.avatar, displayName, role, image } });
+                setPage('group');
+            };
+
+            const handleImageUpload = (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        setImage(event.target.result);
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            };
+            
+            const roles = ["Meme Mage", "Text Warrior", "Confessor", "Screenshot Samurai", "GIF Guardian"];
+
+            return (
+                <div className="flex items-center justify-center min-h-screen px-4">
+                    <motion.div 
+                        className="w-full max-w-4xl p-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl grid md:grid-cols-2 gap-8"
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <div className="space-y-6">
+                            <h2 className="text-4xl font-bitcount text-[var(--accent-color)]">Customize Your Avatar</h2>
+                            <div className="space-y-4 font-gloria">
+                                <div>
+                                    <label className="block mb-1">Display Name</label>
+                                    <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className="w-full px-4 py-2 bg-transparent border-2 border-[var(--secondary-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]" />
+                                </div>
+                                <div>
+                                    <label className="block mb-1">Avatar Role</label>
+                                    <select value={role} onChange={e => setRole(e.target.value)} className="w-full px-4 py-2 bg-gray-800 text-white border-2 border-[var(--secondary-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]">
+                                        {roles.map(r => <option key={r} value={r}>{r}</option>)}
+                                    </select>
+                                </div>
+                                <button onClick={handleSave} className="w-full mt-8 px-8 py-3 bg-[var(--accent-color)] text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 font-gloria">
+                                    Save & Continue
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-center justify-center space-y-4">
+                            <img src={image} alt="Avatar Preview" className="w-48 h-48 rounded-full object-cover border-4 border-[var(--secondary-color)]" />
+                            <input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} className="hidden" />
+                            <button onClick={() => fileInputRef.current.click()} className="font-gloria px-4 py-2 border border-dashed border-[var(--secondary-color)] rounded-lg hover:bg-white/10">
+                                Upload Image
+                            </button>
+                            <h3 className="text-2xl font-bold font-gloria">{displayName}</h3>
+                            <p className="text-lg text-[var(--secondary-color)] font-gloria">{role}</p>
+                        </div>
+                    </motion.div>
+                </div>
+            );
+        };
+
+        const GroupPage = () => {
+            const { createGroup, joinGroup } = useContext(AppContext);
+            const [groupName, setGroupName] = useState('');
+            const [groupCode, setGroupCode] = useState('');
+            const [error, setError] = useState('');
+            const [newCode, setNewCode] = useState('');
+
+            const handleCreate = () => {
+                if (!groupName) {
+                    setError("Group name is required.");
+                    return;
+                }
+                const code = createGroup(groupName);
+                setNewCode(code);
+                setError('');
+            };
+
+            const handleJoin = () => {
+                if (!groupCode) {
+                    setError("Group code is required.");
+                    return;
+                }
+                if (!joinGroup(groupCode.toUpperCase())) {
+                    setError("Invalid group code.");
+                } else {
+                    setError('');
+                }
+            };
+
+            return (
+                <div className="flex items-center justify-center min-h-screen px-4">
+                    <motion.div 
+                        className="w-full max-w-xl p-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl space-y-8"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                    >
+                        <div>
+                            <h2 className="text-3xl font-bitcount text-[var(--accent-color)] mb-4">Create a Group</h2>
+                            <div className="flex space-x-2 font-gloria">
+                                <input type="text" placeholder="Enter Group Name" value={groupName} onChange={e => setGroupName(e.target.value)} className="w-full px-4 py-2 bg-transparent border-2 border-[var(--secondary-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]" />
+                                <button onClick={handleCreate} className="px-6 py-2 bg-[var(--accent-color)] text-white font-bold rounded-lg shadow-lg hover:bg-opacity-80">Create</button>
+                            </div>
+                            {newCode && <p className="mt-2 text-green-400 font-gloria">Group created! Your code is: <strong className="select-all p-1 rounded bg-black/30">{newCode}</strong></p>}
+                        </div>
+                        <div className="text-center font-gloria text-2xl">OR</div>
+                        <div>
+                            <h2 className="text-3xl font-bitcount text-[var(--accent-color)] mb-4">Join a Group</h2>
+                            <div className="flex space-x-2 font-gloria">
+                                <input type="text" placeholder="Enter Group Code" value={groupCode} onChange={e => setGroupCode(e.target.value)} className="w-full px-4 py-2 bg-transparent border-2 border-[var(--secondary-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]" />
+                                <button onClick={handleJoin} className="px-6 py-2 bg-[var(--secondary-color)] text-white font-bold rounded-lg shadow-lg hover:bg-opacity-80">Join</button>
+                            </div>
+                        </div>
+                        {error && <p className="text-red-400 text-center mt-4 font-gloria">{error}</p>}
+                    </motion.div>
+                </div>
+            );
+        };
+        
+        const GroupDashboard = () => {
+            const { setPage, user, groups, currentGroup, setGroups } = useContext(AppContext);
+            const group = groups[currentGroup];
+            const [preview, setPreview] = useState(null);
+            const fileInputRef = useRef(null);
+
+            const handleFileUpload = (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    setPreview(URL.createObjectURL(e.target.files[0]));
+                }
+            };
+            
+            const handleUpload = () => {
+                if (!preview) return;
+                const newLore = {
+                    id: Date.now(),
+                    uploader: user.avatar.displayName,
+                    image: preview,
+                    rating: 0,
+                    raters: 0
+                };
+                const updatedGroup = { ...group, lore: [newLore, ...group.lore] };
+                setGroups(prev => ({ ...prev, [currentGroup]: updatedGroup }));
+                setPreview(null);
+                fileInputRef.current.value = ""; // Reset file input
+            };
+
+            const handleRate = (loreId, newRating) => {
+                const updatedLore = group.lore.map(l => {
+                    if (l.id === loreId) {
+                        // This is a simplified rating logic for the prototype
+                        const totalRating = l.rating * l.raters;
+                        const newRaters = l.raters + 1;
+                        return { ...l, rating: (totalRating + newRating) / newRaters, raters: newRaters };
+                    }
+                    return l;
+                });
+                const updatedGroup = { ...group, lore: updatedLore };
+                setGroups(prev => ({ ...prev, [currentGroup]: updatedGroup }));
+            };
+
+            if (!group) return <div className="flex items-center justify-center min-h-screen">Loading group...</div>;
+            
+            const leaderboard = [...group.members].sort((a, b) => {
+                const scoreA = group.lore.filter(l => l.uploader === a).reduce((acc, l) => acc + l.rating * l.raters, 0);
+                const scoreB = group.lore.filter(l => l.uploader === b).reduce((acc, l) => acc + l.rating * l.raters, 0);
+                return scoreB - scoreA;
+            });
+
+            return (
+                <div className="p-4 md:p-8 max-w-7xl mx-auto font-gloria">
+                    <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+                        <div>
+                           <h1 className="text-4xl font-bitcount text-[var(--accent-color)]">{group.name}</h1>
+                           <p>{group.members.length} Members | Daily Streak: {group.streak}/365</p>
+                           <p>Invite Code: <strong className="select-all bg-black/30 p-1 rounded">{currentGroup}</strong></p>
+                        </div>
+                        <div className="flex gap-4">
+                            <button onClick={() => setPage('hall-of-fame')} className="px-4 py-2 bg-yellow-500 text-black font-bold rounded-lg shadow-lg hover:bg-yellow-400">Hall of Fame</button>
+                            <button onClick={() => setPage('flipbook')} className="px-4 py-2 bg-blue-500 text-white font-bold rounded-lg shadow-lg hover:bg-blue-400">View Flipbook</button>
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {/* Lore Feed */}
+                        <div className="md:col-span-2 space-y-6">
+                            <div className="bg-black/20 p-4 rounded-lg">
+                                <h3 className="text-2xl font-bitcount mb-4">Upload New Lore</h3>
+                                <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                                    <input type="file" accept="image/*" onChange={handleFileUpload} ref={fileInputRef} className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[var(--accent-color)] file:text-white hover:file:bg-opacity-80"/>
+                                    {preview && <img src={preview} className="w-16 h-16 rounded object-cover" />}
+                                    <button onClick={handleUpload} disabled={!preview} className="px-6 py-2 bg-[var(--accent-color)] text-white font-bold rounded-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto">Upload</button>
+                                </div>
+                            </div>
+                            <div className="space-y-8 max-h-[70vh] overflow-y-auto p-2">
+                                {group.lore.map((lore, index) => (
+                                    <div key={lore.id} className="bg-black/10 p-4 rounded-lg shadow-lg">
+                                        <div className="flex items-center mb-2">
+                                            <p className="font-bold">{lore.uploader}</p>
+                                            {index === 0 && <span className="ml-3 text-xs bg-green-500 text-white px-2 py-1 rounded-full">New Lore Dropped!</span>}
+                                        </div>
+                                        <img src={lore.image} alt="Lore screenshot" className="rounded-lg w-full mb-2" />
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center space-x-1">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <button key={star} onClick={() => handleRate(lore.id, star)} className={`text-2xl transition-colors ${star <= Math.round(lore.rating) ? 'text-yellow-400' : 'text-gray-500'} hover:text-yellow-300`}>★</button>
+                                                ))}
+                                            </div>
+                                            <p>{lore.rating.toFixed(1)}/5.0 ({lore.raters} ratings)</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        {/* Members & Leaderboard */}
+                        <div className="bg-black/20 p-4 rounded-lg space-y-4 max-h-[85vh] overflow-y-auto">
+                            <h3 className="text-2xl font-bitcount">Leaderboard</h3>
+                            <ul className="space-y-3">
+                                {leaderboard.map((memberName, index) => {
+                                    const score = group.lore.filter(l => l.uploader === memberName).reduce((acc, l) => acc + l.rating * l.raters, 0);
+                                    return (
+                                        <li key={memberName} className="flex items-center justify-between bg-black/20 p-2 rounded-lg">
+                                            <div className="flex items-center">
+                                                <span className="font-bold text-lg mr-3">{index + 1}.</span>
+                                                <p>{memberName}</p>
+                                            </div>
+                                            <p className="font-bold text-yellow-400">{score.toFixed(0)} pts</p>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        const RitualPage = () => {
+            const { setPage } = useContext(AppContext);
+            const [ritual, setRitual] = useState(null);
+            const [inputValue, setInputValue] = useState('');
+            const canvasRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+
+            useEffect(() => {
+                const rituals = [
+                    { id: 'circle', prompt: 'Draw a sacred circle to appease the spirits.' },
+                    { id: 'incantation', prompt: 'Input the Sacred Incantation: owo summonus memerino' },
+                    { id: 'confession', prompt: 'Confess your worst typo.' },
+                    { id: 'trivia', prompt: 'How many group chats have you ghosted this week?' },
+                ];
+                setRitual(rituals[Math.floor(Math.random() * rituals.length)]);
+            }, []);
+            
+            const completeRitual = () => {
+                localStorage.setItem('lastRitualDate', new Date().toISOString().split('T')[0]);
+                setPage('group'); // Go to the generic group page, which will redirect
+            };
+
+            const startDrawing = ({ nativeEvent }) => {
+                const { offsetX, offsetY } = nativeEvent;
+                const ctx = canvasRef.current.getContext('2d');
+                ctx.strokeStyle = '#FF4C4C';
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.moveTo(offsetX, offsetY);
+                setIsDrawing(true);
+            };
+
+            const draw = ({ nativeEvent }) => {
+                if (!isDrawing) return;
+                const { offsetX, offsetY } = nativeEvent;
+                const ctx = canvasRef.current.getContext('2d');
+                ctx.lineTo(offsetX, offsetY);
+                ctx.stroke();
+            };
+
+            const stopDrawing = () => {
+                if (!isDrawing) return;
+                setIsDrawing(false);
+                setTimeout(completeRitual, 1000); // Complete after a short delay
+            };
+
+            if (!ritual) return <div className="flex items-center justify-center min-h-screen">Summoning ritual...</div>;
+
+            return (
+                <div className="flex items-center justify-center min-h-screen px-4">
+                    <motion.div 
+                        className="w-full max-w-xl p-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl text-center"
+                        initial={{ opacity: 0, y: -50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <h2 className="text-4xl font-bitcount text-[var(--accent-color)] mb-4">Daily Ritual</h2>
+                        <p className="font-gloria mb-6 text-xl">{ritual.prompt}</p>
+                        
+                        {ritual.id === 'circle' && (
+                            <canvas
+                                ref={canvasRef}
+                                width="400"
+                                height="300"
+                                className="bg-gray-800 rounded-lg mx-auto cursor-crosshair"
+                                onMouseDown={startDrawing}
+                                onMouseMove={draw}
+                                onMouseUp={stopDrawing}
+                                onMouseLeave={stopDrawing}
+                            ></canvas>
+                        )}
+
+                        {(ritual.id === 'incantation' || ritual.id === 'confession' || ritual.id === 'trivia') && (
+                            <form onSubmit={(e) => { e.preventDefault(); completeRitual(); }} className="space-y-4">
+                                <input 
+                                    type="text" 
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    className="w-full px-4 py-2 bg-transparent border-2 border-[var(--secondary-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]" 
+                                />
+                                <button type="submit" className="px-6 py-2 bg-[var(--accent-color)] text-white font-bold rounded-lg shadow-lg">Submit</button>
+                            </form>
+                        )}
+                    </motion.div>
+                </div>
+            );
+        };
+        
+        const FlipbookPage = () => {
+            const { setPage, groups, currentGroup } = useContext(AppContext);
+            const group = groups[currentGroup];
+            const lorePages = group ? group.lore.map(l => l.image) : [];
+            
+            // FIXED: Get the component from the global variable exposed by the CDN script.
+            const HTMLFlipBook = ReactPageFlip.default;
+
+            // A styled page component for the flipbook
+            const Page = React.forwardRef((props, ref) => {
+                return (
+                    <div className="bg-gray-100 dark:bg-gray-700 flex items-center justify-center border-2 border-yellow-600" ref={ref}>
+                        <div className="p-2 text-center flex items-center justify-center w-full h-full">
+                            {props.children}
+                        </div>
+                    </div>
+                );
+            });
+
+            return (
+                <div className="flex flex-col items-center justify-center min-h-screen p-4 font-gloria">
+                    <h1 className="text-4xl font-bitcount text-[var(--accent-color)] mb-4">The Lore Flipbook</h1>
+                    <div style={{ width: '90vw', maxWidth: '1000px', height: '70vh' }}>
+                        {lorePages.length > 0 ? (
+                            <HTMLFlipBook 
+                                width={500} 
+                                height={700} 
+                                showCover={true} 
+                                className="mx-auto"
+                                style={{}}
+                                size="stretch"
+                                minWidth={315}
+                                maxWidth={1000}
+                                minHeight={400}
+                                maxHeight={1533}
+                            >
+                                {lorePages.map((imgSrc, index) => (
+                                    <Page key={index} number={index + 1}>
+                                        <img src={imgSrc} className="max-w-full max-h-full object-contain" alt={`Lore page ${index + 1}`} />
+                                    </Page>
+                                ))}
+                            </HTMLFlipBook>
+                        ) : (
+                            <p>No lore has been uploaded to this group yet.</p>
+                        )}
+                    </div>
+                    <button onClick={() => setPage('group-dashboard')} className="mt-8 px-8 py-3 bg-[var(--secondary-color)] text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300">
+                        Back to Dashboard
+                    </button>
+                </div>
+            );
+        };
+        
+        const HallOfFamePage = () => {
+            const { setPage, groups } = useContext(AppContext);
+            const allLore = Object.values(groups).flatMap(g => g.lore.map(l => ({...l, groupName: g.name})));
+            const topLore = allLore.sort((a, b) => (b.rating * b.raters) - (a.rating * a.raters)).slice(0, 10);
+
+            return (
+                <div className="p-4 md:p-8 max-w-4xl mx-auto font-gloria">
+                    <h1 className="text-5xl font-bitcount text-center text-yellow-400 mb-8">Hall of Fame</h1>
+                    <div className="space-y-6">
+                        {topLore.map((lore, index) => (
+                            <motion.div 
+                                key={lore.id} 
+                                className="flex flex-col sm:flex-row items-center bg-black/20 p-4 rounded-lg shadow-lg gap-4"
+                                initial={{ opacity: 0, x: -50 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                            >
+                                <span className="text-4xl font-bold font-bitcount text-yellow-400">#{index + 1}</span>
+                                <img src={lore.image} alt="Top lore" className="w-32 h-32 object-cover rounded-md border-2 border-yellow-500" />
+                                <div className="flex-1 text-center sm:text-left">
+                                    <p>Uploaded by: <strong className="text-white">{lore.uploader}</strong></p>
+                                    <p>From group: <strong className="text-white">{lore.groupName}</strong></p>
+                                    <p>Rating: <strong className="text-yellow-400">{lore.rating.toFixed(1)}/5.0</strong> ({lore.raters} votes)</p>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                       <div className="text-center mt-8">
+                            <button onClick={() => setPage('group-dashboard')} className="px-8 py-3 bg-[var(--secondary-color)] text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300">
+                                Back to Dashboard
+                            </button>
+                        </div>
+                </div>
+            );
+        };
+
+        // Main App component to handle page routing
+        const App = () => {
+            const { page, user, currentGroup } = useContext(AppContext);
+
+            const renderPage = () => {
+                switch (page) {
+                    case 'login':
+                        return <AuthPage isLogin={true} />;
+                    case 'signup':
+                        return <AuthPage isLogin={false} />;
+                    case 'instructions':
+                        return <InstructionsPage />;
+                    case 'customize':
+                        return <CustomizeAvatarPage />;
+                    case 'group':
+                        // If user is in a group, go to dashboard, otherwise show create/join page.
+                        return currentGroup ? <GroupDashboard /> : <GroupPage />;
+                    case 'group-dashboard':
+                        return <GroupDashboard />;
+                    case 'ritual':
+                        return <RitualPage />;
+                    case 'flipbook':
+                        return <FlipbookPage />;
+                    case 'hall-of-fame':
+                        return <HallOfFamePage />;
+                    case 'landing':
+                    default:
+                        return <LandingPage />;
+                }
+            };
+
+            return (
+                <div className="relative z-10">
+                    <Header />
+                    <AnimatedBackground />
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={page}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.5 }}
+                        >
+                           {renderPage()}
+                        {/* FIXED: Correctly closed the motion.div tag */}
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+            );
+        };
+
+        // Render the application
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <AppProvider>
+                <App />
+            </AppProvider>
+        );
+
+    </script>
+
+</body>
+</html>
