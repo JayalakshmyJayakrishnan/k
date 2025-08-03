@@ -9,28 +9,19 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&family=Press+Start+2P&family=Rock+Salt&display=swap" rel="stylesheet">
     
     <style>
         /*
-          NOTE: Custom fonts are self-hosted from a local 'fonts' folder.
-          Create a 'fonts' folder next to this index.html file
-          and place the .ttf font files inside it.
+          NOTE: All custom fonts now come from Google Fonts.
+          The local 'fonts' folder is no longer needed.
         */
-        @font-face {
-            font-family: 'Bitcount Prop Single';
-            src: url('./fonts/BitcountPropSingle-Regular.ttf') format('truetype');
-        }
-        @font-face {
-            font-family: 'CageWorld';
-            src: url('./fonts/cageworld.ttf') format('truetype');
-        }
-
         body {
             font-family: 'Gloria Hallelujah', cursive;
         }
-        .font-bitcount { font-family: 'Bitcount Prop Single', sans-serif; }
-        .font-cageworld { font-family: 'CageWorld', sans-serif; }
+        /* ✅ FIXED: Font classes now use the Google Font alternatives */
+        .font-bitcount { font-family: 'Press Start 2P', cursive; }
+        .font-cageworld { font-family: 'Rock Salt', cursive; }
         .font-gloria { font-family: 'Gloria Hallelujah', cursive; }
 
         /* Custom scrollbar */
@@ -56,7 +47,7 @@
 
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com//@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.4/dist/framer-motion.umd.min.js"></script>
     
@@ -71,8 +62,6 @@
     
     <script type="text/babel" data-type="module">
         const { useState, useEffect, useRef, createContext, useContext } = React;
-        
-        // This line requires the 'FramerMotion' script above to have loaded correctly
         const { motion, AnimatePresence } = FramerMotion;
 
         // --- Mock Data ---
@@ -551,7 +540,7 @@
             
             const completeRitual = () => {
                 localStorage.setItem('lastRitualDate', new Date().toISOString().split('T')[0]);
-                setPage('group');
+                setPage('group-dashboard');
             };
 
             const startDrawing = ({ nativeEvent }) => {
@@ -654,7 +643,7 @@
 
         // Main App component to handle page routing
         const App = () => {
-            const { page } = useContext(AppContext);
+            const { page, currentGroup } = useContext(AppContext);
 
             const renderPage = () => {
                 switch (page) {
@@ -662,7 +651,7 @@
                     case 'signup': return <AuthPage isLogin={false} />;
                     case 'instructions': return <InstructionsPage />;
                     case 'customize': return <CustomizeAvatarPage />;
-                    case 'group': return <GroupPage />; // Logic now handles redirection in create/join
+                    case 'group': return currentGroup ? <GroupDashboard /> : <GroupPage />;
                     case 'group-dashboard': return <GroupDashboard />;
                     case 'ritual': return <RitualPage />;
                     case 'flipbook': return <FlipbookPage />;
