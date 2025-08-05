@@ -19,8 +19,20 @@
         ::-webkit-scrollbar-track { background: #2d3748; }
         ::-webkit-scrollbar-thumb { background: #FF4C4C; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #DD4A48; }
-        .dark { --bg-color: #111111; --text-color: #FAFAFA; --accent-color: #FF4C4C; --secondary-color: #8DECB4; }
-        :root:not(.dark) { --bg-color: #F4F4F4; --text-color: #343434; --accent-color: #DD4A48; --secondary-color: #50586C; }
+        
+        /* ✅ UPDATED BACKGROUND COLORS */
+        .dark {
+            --bg-color: #1A202C; /* A richer dark blue-gray */
+            --text-color: #FAFAFA;
+            --accent-color: #FF4C4C;
+            --secondary-color: #8DECB4;
+        }
+        :root:not(.dark) {
+            --bg-color: #F7FAFC; /* A very light, clean gray */
+            --text-color: #343434;
+            --accent-color: #DD4A48;
+            --secondary-color: #50586C;
+        }
     </style>
 
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -30,43 +42,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/react-pageflip@2.0.3/build/react-pageflip.browser.js"></script>
-    
-    </head>
+
+</head>
 <body class="bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-500">
 
     <div id="root"></div>
     
     <script type="text/babel" data-type="module">
-        // NOTE: Framer Motion has been removed.
         const { useState, useEffect, useRef, createContext, useContext } = React;
 
         // --- Mock Data ---
-        const MOCK_USERS = {
-            "test@test.com": {
-                username: "MemeLord",
-                password: "password123",
-                avatar: {
-                    displayName: "MemeLord",
-                    color: "purple",
-                    role: "Meme Mage",
-                    image: "https://placehold.co/100x100/8B5CF6/FFFFFF?text=ML"
-                }
-            }
-        };
-        const MOCK_GROUPS = {
-            "L0R3MAST3R": {
-                name: "The Lore Masters",
-                members: ["MemeLord", "Newbie"],
-                streak: 45,
-                lore: [
-                    { id: 1, uploader: "MemeLord", image: "https://placehold.co/600x800/111111/FAFAFA?text=Lore+1", rating: 4.5, raters: 10 },
-                    { id: 2, uploader: "Newbie", image: "https://placehold.co/600x800/343434/FAFAFA?text=Lore+2", rating: 3.8, raters: 5 },
-                    { id: 3, uploader: "MemeLord", image: "https://placehold.co/600x800/50586C/FAFAFA?text=Lore+3", rating: 4.9, raters: 15 },
-                ]
-            }
-        };
+        const MOCK_USERS = { "test@test.com": { username: "MemeLord", password: "password123", avatar: { displayName: "MemeLord", color: "purple", role: "Meme Mage", image: "https://placehold.co/100x100/8B5CF6/FFFFFF?text=ML" } } };
+        const MOCK_GROUPS = { "L0R3MAST3R": { name: "The Lore Masters", members: ["MemeLord", "Newbie"], streak: 45, lore: [ { id: 1, uploader: "MemeLord", image: "https://placehold.co/600x800/111111/FAFAFA?text=Lore+1", rating: 4.5, raters: 10 }, { id: 2, uploader: "Newbie", image: "https://placehold.co/600x800/343434/FAFAFA?text=Lore+2", rating: 3.8, raters: 5 }, { id: 3, uploader: "MemeLord", image: "https://placehold.co/600x800/50586C/FAFAFA?text=Lore+3", rating: 4.9, raters: 15 }, ] } };
         
-        // --- App Context for Global State ---
+        // --- App Context ---
         const AppContext = createContext();
 
         const AppProvider = ({ children }) => {
@@ -123,6 +112,13 @@
             };
             
             const login = (userData) => { setUser(userData); setPage('instructions'); };
+
+            // ✅ LOGOUT FUNCTION ADDED
+            const logout = () => {
+                setUser(null);
+                setCurrentGroup(null);
+                setPage('landing');
+            };
             
             const createGroup = (groupName) => {
                 const newCode = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -146,7 +142,7 @@
                 }
                 return false;
             };
-            const value = { page, setPage, theme, toggleTheme, isMuted, toggleMute, user, setUser, login, groups, createGroup, joinGroup, currentGroup, setCurrentGroup, setGroups };
+            const value = { page, setPage, theme, toggleTheme, isMuted, toggleMute, user, setUser, login, logout, groups, createGroup, joinGroup, currentGroup, setCurrentGroup, setGroups };
             return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
         };
         
@@ -187,11 +183,19 @@
         };
 
         const Header = () => {
-            const { theme, toggleTheme, isMuted, toggleMute } = useContext(AppContext);
+            const { theme, toggleTheme, isMuted, toggleMute, user, logout } = useContext(AppContext);
             return (
                 <header className="fixed top-0 left-0 right-0 p-4 flex justify-between items-center z-50">
-                    <button onClick={toggleTheme} className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-2xl hover:scale-110 transition-transform">{theme === 'light' ? '🌙' : '☀️'}</button>
-                    <button onClick={toggleMute} className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-2xl hover:scale-110 transition-transform">{isMuted ? '🔇' : '🔊'}</button>
+                    <div className="flex items-center space-x-4">
+                        <button onClick={toggleTheme} className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-2xl hover:scale-110 transition-transform">{theme === 'light' ? '🌙' : '☀️'}</button>
+                        <button onClick={toggleMute} className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-2xl hover:scale-110 transition-transform">{isMuted ? '🔇' : '🔊'}</button>
+                    </div>
+                    {/* ✅ LOGOUT BUTTON ADDED (only appears when logged in) */}
+                    {user && (
+                        <button onClick={logout} className="px-4 py-2 bg-red-600 text-white font-bold rounded-lg shadow-lg hover:bg-red-500 transition-colors">
+                            Logout
+                        </button>
+                    )}
                 </header>
             );
         };
@@ -457,12 +461,7 @@
             const canvasRef = useRef(null);
             const [isDrawing, setIsDrawing] = useState(false);
             useEffect(() => {
-                const rituals = [
-                    { id: 'circle', prompt: 'Draw a sacred circle to appease the spirits.' },
-                    { id: 'incantation', prompt: 'Input the Sacred Incantation: owo summonus memerino' },
-                    { id: 'confession', prompt: 'Confess your worst typo.' },
-                    { id: 'trivia', prompt: 'How many group chats have you ghosted this week?' },
-                ];
+                const rituals = [ { id: 'circle', prompt: 'Draw a sacred circle to appease the spirits.' }, { id: 'incantation', prompt: 'Input the Sacred Incantation: owo summonus memerino' }, { id: 'confession', prompt: 'Confess your worst typo.' }, { id: 'trivia', prompt: 'How many group chats have you ghosted this week?' }, ];
                 setRitual(rituals[Math.floor(Math.random() * rituals.length)]);
             }, []);
             const completeRitual = () => { localStorage.setItem('lastRitualDate', new Date().toISOString().split('T')[0]); setPage('group-dashboard'); };
