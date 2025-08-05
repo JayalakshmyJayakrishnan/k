@@ -12,57 +12,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&family=Press+Start+2P&family=Rock+Salt&display=swap" rel="stylesheet">
     
     <style>
-        /*
-          NOTE: All custom fonts now come from Google Fonts.
-          The local 'fonts' folder is no longer needed.
-        */
-        body {
-            font-family: 'Gloria Hallelujah', cursive;
-        }
-        /* ✅ FIXED: Font classes now use the Google Font alternatives */
+        body { font-family: 'Gloria Hallelujah', cursive; }
         .font-bitcount { font-family: 'Press Start 2P', cursive; }
         .font-cageworld { font-family: 'Rock Salt', cursive; }
-        .font-gloria { font-family: 'Gloria Hallelujah', cursive; }
-
-        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #2d3748; }
         ::-webkit-scrollbar-thumb { background: #FF4C4C; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #DD4A48; }
-        
-        /* Theme variables */
-        .dark {
-            --bg-color: #111111;
-            --text-color: #FAFAFA;
-            --accent-color: #FF4C4C;
-            --secondary-color: #8DECB4;
-        }
-        :root:not(.dark) {
-            --bg-color: #F4F4F4;
-            --text-color: #343434;
-            --accent-color: #DD4A48;
-            --secondary-color: #50586C;
-        }
+        .dark { --bg-color: #111111; --text-color: #FAFAFA; --accent-color: #FF4C4C; --secondary-color: #8DECB4; }
+        :root:not(.dark) { --bg-color: #F4F4F4; --text-color: #343434; --accent-color: #DD4A48; --secondary-color: #50586C; }
     </style>
 
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <script src="https://cdn.jsdelivr.net/npm/framer-motion@10.16.4/dist/framer-motion.umd.min.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/react-pageflip@2.0.3/build/react-pageflip.browser.js"></script>
-
-</head>
+    
+    </head>
 <body class="bg-[var(--bg-color)] text-[var(--text-color)] transition-colors duration-500">
 
     <div id="root"></div>
     
     <script type="text/babel" data-type="module">
+        // NOTE: Framer Motion has been removed.
         const { useState, useEffect, useRef, createContext, useContext } = React;
-        const { motion, AnimatePresence } = FramerMotion;
 
         // --- Mock Data ---
         const MOCK_USERS = {
@@ -77,7 +53,6 @@
                 }
             }
         };
-
         const MOCK_GROUPS = {
             "L0R3MAST3R": {
                 name: "The Lore Masters",
@@ -127,7 +102,6 @@
                         setPage('ritual');
                     }
                 }
-
                 return () => audioRef.current?.unload();
             }, [user]);
 
@@ -148,19 +122,11 @@
                 }
             };
             
-            const login = (userData) => {
-                setUser(userData);
-                setPage('instructions');
-            };
+            const login = (userData) => { setUser(userData); setPage('instructions'); };
             
             const createGroup = (groupName) => {
                 const newCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-                const newGroup = {
-                    name: groupName,
-                    members: [user.avatar.displayName],
-                    streak: 1,
-                    lore: []
-                };
+                const newGroup = { name: groupName, members: [user.avatar.displayName], streak: 1, lore: [] };
                 setGroups(prev => ({ ...prev, [newCode]: newGroup }));
                 setCurrentGroup(newCode);
                 setPage('group-dashboard');
@@ -180,9 +146,7 @@
                 }
                 return false;
             };
-
             const value = { page, setPage, theme, toggleTheme, isMuted, toggleMute, user, setUser, login, groups, createGroup, joinGroup, currentGroup, setCurrentGroup, setGroups };
-
             return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
         };
         
@@ -196,7 +160,6 @@
                 const tileSize = 40;
                 const colors = ['#4a044e', '#3b0764', '#2e0b5c', '#1e1b4b', '#fde047', '#fbbf24'];
                 let tiles = [];
-
                 function resizeCanvas() {
                     canvas.width = window.innerWidth;
                     canvas.height = window.innerHeight;
@@ -207,12 +170,9 @@
                         }
                     }
                 }
-
                 function draw() {
                     tiles.forEach(tile => {
-                        if (Math.random() > 0.995) {
-                           tile.color = colors[Math.floor(Math.random() * colors.length)];
-                        }
+                        if (Math.random() > 0.995) { tile.color = colors[Math.floor(Math.random() * colors.length)]; }
                         ctx.fillStyle = tile.color;
                         ctx.fillRect(tile.x, tile.y, tileSize, tileSize);
                     });
@@ -221,10 +181,7 @@
                 window.addEventListener('resize', resizeCanvas);
                 resizeCanvas();
                 draw();
-                return () => {
-                    window.removeEventListener('resize', resizeCanvas);
-                    cancelAnimationFrame(frame);
-                };
+                return () => { window.removeEventListener('resize', resizeCanvas); cancelAnimationFrame(frame); };
             }, []);
             return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full -z-10"></canvas>;
         };
@@ -233,12 +190,8 @@
             const { theme, toggleTheme, isMuted, toggleMute } = useContext(AppContext);
             return (
                 <header className="fixed top-0 left-0 right-0 p-4 flex justify-between items-center z-50">
-                    <button onClick={toggleTheme} className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-2xl hover:scale-110 transition-transform">
-                        {theme === 'light' ? '🌙' : '☀️'}
-                    </button>
-                    <button onClick={toggleMute} className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-2xl hover:scale-110 transition-transform">
-                        {isMuted ? '🔇' : '🔊'}
-                    </button>
+                    <button onClick={toggleTheme} className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-2xl hover:scale-110 transition-transform">{theme === 'light' ? '🌙' : '☀️'}</button>
+                    <button onClick={toggleMute} className="p-2 rounded-full bg-black/20 backdrop-blur-sm text-2xl hover:scale-110 transition-transform">{isMuted ? '🔇' : '🔊'}</button>
                 </header>
             );
         };
@@ -247,14 +200,14 @@
             const { setPage } = useContext(AppContext);
             return (
                 <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
-                    <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.5, type: "spring", stiffness: 100 }}>
+                    <div>
                         <h1 className="text-7xl md:text-9xl font-bitcount text-[var(--accent-color)] drop-shadow-lg">NCPify</h1>
                         <p className="mt-4 text-xl md:text-2xl font-gloria">Your Lore Begins Here...</p>
-                    </motion.div>
-                    <motion.div className="mt-12 space-y-4 md:space-y-0 md:space-x-6 flex flex-col md:flex-row" initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 1, duration: 0.8 }}>
+                    </div>
+                    <div className="mt-12 space-y-4 md:space-y-0 md:space-x-6 flex flex-col md:flex-row">
                         <button onClick={() => setPage('signup')} className="px-8 py-3 bg-[var(--accent-color)] text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 font-gloria">Create Account</button>
                         <button onClick={() => setPage('login')} className="px-8 py-3 bg-[var(--secondary-color)] text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 font-gloria">Login</button>
-                    </motion.div>
+                    </div>
                 </div>
             );
         };
@@ -274,10 +227,7 @@
                     if (user && user.password === password) login(user);
                     else setError("Invalid credentials. Hint: test@test.com, password123");
                 } else {
-                    if (!email || !username || !password) {
-                        setError("All fields are required.");
-                        return;
-                    }
+                    if (!email || !username || !password) { setError("All fields are required."); return; }
                     const newUser = { username, password, avatar: { displayName: username, color: 'blue', role: 'Text Warrior', image: `https://placehold.co/100x100/3B82F6/FFFFFF?text=${username.substring(0,2)}` } };
                     MOCK_USERS[email] = newUser;
                     login(newUser);
@@ -286,7 +236,7 @@
 
             return (
                 <div className="flex items-center justify-center min-h-screen px-4">
-                    <motion.div className="w-full max-w-md p-8 space-y-6 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl" initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }}>
+                    <div className="w-full max-w-md p-8 space-y-6 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl">
                         <h2 className="text-4xl font-bold text-center font-bitcount text-[var(--accent-color)]">{isLogin ? 'Login' : 'Create Account'}</h2>
                         <form onSubmit={handleSubmit} className="space-y-6 font-gloria">
                             {!isLogin && (<input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className="w-full px-4 py-3 bg-transparent border-2 border-[var(--secondary-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]" />)}
@@ -298,7 +248,7 @@
                          <p className="text-center font-gloria">{isLogin ? "Don't have an account? " : "Already a legend? "}
                             <button onClick={() => setPage(isLogin ? 'signup' : 'login')} className="font-bold text-[var(--secondary-color)] hover:underline">{isLogin ? 'Sign Up' : 'Login'}</button>
                          </p>
-                    </motion.div>
+                    </div>
                 </div>
             );
         };
@@ -307,15 +257,15 @@
             const { setPage } = useContext(AppContext);
             return (
                 <div className="flex items-center justify-center min-h-screen px-4">
-                    <motion.div className="w-full max-w-2xl p-8 space-y-6 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl text-center" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
-                        <h2 className="text-5xl font-cageworld text-[var(--accent-color)] mb-6">{"INSTRUCTIONS".split("").map((char, i) => (<motion.span key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.1 }}>{char}</motion.span>))}</h2>
+                    <div className="w-full max-w-2xl p-8 space-y-6 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl text-center">
+                        <h2 className="text-5xl font-cageworld text-[var(--accent-color)] mb-6">INSTRUCTIONS</h2>
                         <div className="text-lg font-gloria space-y-4 text-left p-4 border-2 border-[var(--secondary-color)] rounded-lg max-h-64 overflow-y-auto">
                             <p>Welcome to NCPify.</p>
                             <p>This application allows you to form groups, upload your chat lore, and compile everything into a legendary flipbook. But there is a catch — every day you return, you must perform a sacred ritual to continue your streak.</p>
                             <p>Lore is sacred. Don’t disappoint the spirits.</p>
                         </div>
                         <button onClick={() => setPage('customize')} className="mt-8 px-8 py-3 bg-[var(--accent-color)] text-white font-bold rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 font-gloria">Begin My Journey</button>
-                    </motion.div>
+                    </div>
                 </div>
             );
         };
@@ -328,11 +278,7 @@
             const fileInputRef = useRef(null);
             const roles = ["Meme Mage", "Text Warrior", "Confessor", "Screenshot Samurai", "GIF Guardian"];
 
-            const handleSave = () => {
-                setUser({ ...user, avatar: { ...user.avatar, displayName, role, image } });
-                setPage('group');
-            };
-
+            const handleSave = () => { setUser({ ...user, avatar: { ...user.avatar, displayName, role, image } }); setPage('group'); };
             const handleImageUpload = (e) => {
                 if (e.target.files && e.target.files[0]) {
                     const reader = new FileReader();
@@ -343,7 +289,7 @@
             
             return (
                 <div className="flex items-center justify-center min-h-screen px-4">
-                    <motion.div className="w-full max-w-4xl p-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl grid md:grid-cols-2 gap-8" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }}>
+                    <div className="w-full max-w-4xl p-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl grid md:grid-cols-2 gap-8">
                         <div className="space-y-6">
                             <h2 className="text-4xl font-bitcount text-[var(--accent-color)]">Customize Your Avatar</h2>
                             <div className="space-y-4 font-gloria">
@@ -367,7 +313,7 @@
                             <h3 className="text-2xl font-bold font-gloria">{displayName}</h3>
                             <p className="text-lg text-[var(--secondary-color)] font-gloria">{role}</p>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
             );
         };
@@ -379,22 +325,12 @@
             const [error, setError] = useState('');
             const [newCode, setNewCode] = useState('');
 
-            const handleCreate = () => {
-                if (!groupName) { setError("Group name is required."); return; }
-                const code = createGroup(groupName);
-                setNewCode(code);
-                setError('');
-            };
-
-            const handleJoin = () => {
-                if (!groupCode) { setError("Group code is required."); return; }
-                if (!joinGroup(groupCode.toUpperCase())) setError("Invalid group code.");
-                else setError('');
-            };
+            const handleCreate = () => { if (!groupName) { setError("Group name is required."); return; } const code = createGroup(groupName); setNewCode(code); setError(''); };
+            const handleJoin = () => { if (!groupCode) { setError("Group code is required."); return; } if (!joinGroup(groupCode.toUpperCase())) setError("Invalid group code."); else setError(''); };
 
             return (
                 <div className="flex items-center justify-center min-h-screen px-4">
-                    <motion.div className="w-full max-w-xl p-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl space-y-8" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+                    <div className="w-full max-w-xl p-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl space-y-8">
                         <div>
                             <h2 className="text-3xl font-bitcount text-[var(--accent-color)] mb-4">Create a Group</h2>
                             <div className="flex space-x-2 font-gloria">
@@ -412,7 +348,7 @@
                             </div>
                         </div>
                         {error && <p className="text-red-400 text-center mt-4 font-gloria">{error}</p>}
-                    </motion.div>
+                    </div>
                 </div>
             );
         };
@@ -423,12 +359,7 @@
             const [preview, setPreview] = useState(null);
             const fileInputRef = useRef(null);
 
-            const handleFileUpload = (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    setPreview(URL.createObjectURL(e.target.files[0]));
-                }
-            };
-            
+            const handleFileUpload = (e) => { if (e.target.files && e.target.files[0]) { setPreview(URL.createObjectURL(e.target.files[0])); } };
             const handleUpload = () => {
                 if (!preview) return;
                 const newLore = { id: Date.now(), uploader: user.avatar.displayName, image: preview, rating: 0, raters: 0 };
@@ -437,7 +368,6 @@
                 setPreview(null);
                 fileInputRef.current.value = "";
             };
-
             const handleRate = (loreId, newRating) => {
                 const updatedLore = group.lore.map(l => {
                     if (l.id === loreId) {
@@ -472,7 +402,6 @@
                             <button onClick={() => setPage('flipbook')} className="px-4 py-2 bg-blue-500 text-white font-bold rounded-lg shadow-lg hover:bg-blue-400">View Flipbook</button>
                         </div>
                     </div>
-
                     <div className="grid md:grid-cols-3 gap-8">
                         <div className="md:col-span-2 space-y-6">
                             <div className="bg-black/20 p-4 rounded-lg">
@@ -527,7 +456,6 @@
             const [inputValue, setInputValue] = useState('');
             const canvasRef = useRef(null);
             const [isDrawing, setIsDrawing] = useState(false);
-
             useEffect(() => {
                 const rituals = [
                     { id: 'circle', prompt: 'Draw a sacred circle to appease the spirits.' },
@@ -537,41 +465,23 @@
                 ];
                 setRitual(rituals[Math.floor(Math.random() * rituals.length)]);
             }, []);
-            
-            const completeRitual = () => {
-                localStorage.setItem('lastRitualDate', new Date().toISOString().split('T')[0]);
-                setPage('group-dashboard');
-            };
-
+            const completeRitual = () => { localStorage.setItem('lastRitualDate', new Date().toISOString().split('T')[0]); setPage('group-dashboard'); };
             const startDrawing = ({ nativeEvent }) => {
                 const { offsetX, offsetY } = nativeEvent;
                 const ctx = canvasRef.current.getContext('2d');
-                ctx.strokeStyle = '#FF4C4C';
-                ctx.lineWidth = 5;
-                ctx.beginPath();
-                ctx.moveTo(offsetX, offsetY);
-                setIsDrawing(true);
+                ctx.strokeStyle = '#FF4C4C'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(offsetX, offsetY); setIsDrawing(true);
             };
-
             const draw = ({ nativeEvent }) => {
                 if (!isDrawing) return;
                 const { offsetX, offsetY } = nativeEvent;
                 const ctx = canvasRef.current.getContext('2d');
-                ctx.lineTo(offsetX, offsetY);
-                ctx.stroke();
+                ctx.lineTo(offsetX, offsetY); ctx.stroke();
             };
-
-            const stopDrawing = () => {
-                if (!isDrawing) return;
-                setIsDrawing(false);
-                setTimeout(completeRitual, 1000);
-            };
-
+            const stopDrawing = () => { if (!isDrawing) return; setIsDrawing(false); setTimeout(completeRitual, 1000); };
             if (!ritual) return <div className="flex items-center justify-center min-h-screen">Summoning ritual...</div>;
-
             return (
                 <div className="flex items-center justify-center min-h-screen px-4">
-                    <motion.div className="w-full max-w-xl p-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl text-center" initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }}>
+                    <div className="w-full max-w-xl p-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl text-center">
                         <h2 className="text-4xl font-bitcount text-[var(--accent-color)] mb-4">Daily Ritual</h2>
                         <p className="font-gloria mb-6 text-xl">{ritual.prompt}</p>
                         {ritual.id === 'circle' && (<canvas ref={canvasRef} width="400" height="300" className="bg-gray-800 rounded-lg mx-auto cursor-crosshair" onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing}></canvas>)}
@@ -581,7 +491,7 @@
                                 <button type="submit" className="px-6 py-2 bg-[var(--accent-color)] text-white font-bold rounded-lg shadow-lg">Submit</button>
                             </form>
                         )}
-                    </motion.div>
+                    </div>
                 </div>
             );
         };
@@ -591,13 +501,7 @@
             const group = groups[currentGroup];
             const lorePages = group ? group.lore.map(l => l.image) : [];
             const HTMLFlipBook = ReactPageFlip.default;
-
-            const Page = React.forwardRef((props, ref) => (
-                <div className="bg-gray-100 dark:bg-gray-700 flex items-center justify-center border-2 border-yellow-600" ref={ref}>
-                    <div className="p-2 text-center flex items-center justify-center w-full h-full">{props.children}</div>
-                </div>
-            ));
-
+            const Page = React.forwardRef((props, ref) => (<div className="bg-gray-100 dark:bg-gray-700 flex items-center justify-center border-2 border-yellow-600" ref={ref}><div className="p-2 text-center flex items-center justify-center w-full h-full">{props.children}</div></div>));
             return (
                 <div className="flex flex-col items-center justify-center min-h-screen p-4 font-gloria">
                     <h1 className="text-4xl font-bitcount text-[var(--accent-color)] mb-4">The Lore Flipbook</h1>
@@ -617,13 +521,12 @@
             const { setPage, groups } = useContext(AppContext);
             const allLore = Object.values(groups).flatMap(g => g.lore.map(l => ({...l, groupName: g.name})));
             const topLore = allLore.sort((a, b) => (b.rating * b.raters) - (a.rating * a.raters)).slice(0, 10);
-
             return (
                 <div className="p-4 md:p-8 max-w-4xl mx-auto font-gloria">
                     <h1 className="text-5xl font-bitcount text-center text-yellow-400 mb-8">Hall of Fame</h1>
                     <div className="space-y-6">
                         {topLore.map((lore, index) => (
-                            <motion.div key={lore.id} className="flex flex-col sm:flex-row items-center bg-black/20 p-4 rounded-lg shadow-lg gap-4" initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.1 }}>
+                            <div key={lore.id} className="flex flex-col sm:flex-row items-center bg-black/20 p-4 rounded-lg shadow-lg gap-4">
                                 <span className="text-4xl font-bold font-bitcount text-yellow-400">#{index + 1}</span>
                                 <img src={lore.image} alt="Top lore" className="w-32 h-32 object-cover rounded-md border-2 border-yellow-500" />
                                 <div className="flex-1 text-center sm:text-left">
@@ -631,7 +534,7 @@
                                     <p>From group: <strong className="text-white">{lore.groupName}</strong></p>
                                     <p>Rating: <strong className="text-yellow-400">{lore.rating.toFixed(1)}/5.0</strong> ({lore.raters} votes)</p>
                                 </div>
-                            </motion.div>
+                            </div>
                         ))}
                     </div>
                     <div className="text-center mt-8">
@@ -641,10 +544,8 @@
             );
         };
 
-        // Main App component to handle page routing
         const App = () => {
             const { page, currentGroup } = useContext(AppContext);
-
             const renderPage = () => {
                 switch (page) {
                     case 'login': return <AuthPage isLogin={true} />;
@@ -659,29 +560,17 @@
                     default: return <LandingPage />;
                 }
             };
-
             return (
                 <div className="relative z-10">
                     <Header />
                     <AnimatedBackground />
-                    <AnimatePresence mode="wait">
-                        <motion.div key={page} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
-                           {renderPage()}
-                        </motion.div>
-                    </AnimatePresence>
+                    <div>{renderPage()}</div>
                 </div>
             );
         };
 
-        // Render the application
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(
-            <AppProvider>
-                <App />
-            </AppProvider>
-        );
-
+        root.render(<AppProvider><App /></AppProvider>);
     </script>
-
 </body>
 </html>
